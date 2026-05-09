@@ -5,5 +5,5 @@ null,
 {"id":3,"animationId":1,"description":"","etypeId":1,"traits":[{"code":31,"dataId":1,"value":0},{"code":22,"dataId":0,"value":0}],"iconIndex":101,"name":"Cane","note":"","params":[0,0,10,0,0,0,0,0],"price":500,"wtypeId":6},
 {"id":4,"animationId":11,"description":"","etypeId":1,"traits":[{"code":31,"dataId":1,"value":0},{"code":22,"dataId":0,"value":0}],"iconIndex":102,"name":"Bow","note":"","params":[0,0,10,0,0,0,0,0],"price":500,"wtypeId":7},
 {"id":5,"animationId":121,"description":"","etypeId":1,"traits":[{"code":31,"dataId":1,"value":0},{"code":22,"dataId":0,"value":0.05}],"iconIndex":84,"name":"Blood Needle","note":"<ActorBattler 1: Valeria_Blood_Needle>\n<ActorBattler 2: Valeria_Blood_Needle>","params":[0,0,30,0,0,0,0,0],"price":0,"wtypeId":1},
-{"id":6,"animationId":6,"description":"","etypeId":1,"traits":[{"code":31,"dataId":1,"value":0},{"code":22,"dataId":0,"value":0}],"iconIndex":96,"name":"Dagger","note":"<ActorBattler 2: Valeria_Sword>","params":[0,0,5,0,0,0,0,0],"price":0,"wtypeId":1}
+{"id":6,"animationId":6,"description":"","etypeId":1,"traits":[{"code":31,"dataId":1,"value":0},{"code":22,"dataId":0,"value":0}],"iconIndex":96,"name":"Dagger","note":"<ActorBattler 2: Valeria_Sword>","params":[0,0,5,0,0,0,0,0],"price":500,"wtypeId":1}
 ]

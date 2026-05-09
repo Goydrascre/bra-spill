@@ -1296,7 +1296,7 @@
 	Moghunter.bhud_hp_meter_pos_x = Number(Moghunter.parameters['HP Meter X-Axis'] || 87);
 	Moghunter.bhud_hp_meter_pos_y = Number(Moghunter.parameters['HP Meter Y-Axis'] || 7);
 	Moghunter.bhud_hp_meter_rotation = Number(Moghunter.parameters['HP Meter Angle'] || 0);
-	Moghunter.bhud_hp_meter_flow = String(Moghunter.parameters['HP Meter Flow Anime'] || false);
+	Moghunter.bhud_hp_meter_flow = String(Moghunter.parameters['HP Meter Flow Anime'] || true);
 	
 	// HP NUMBER POSITION
 	Moghunter.bhud_hp_number_visible  = String(Moghunter.parameters['HP Number Visible'] || true);
@@ -1312,7 +1312,7 @@
 	Moghunter.bhud_mp_meter_pos_x = Number(Moghunter.parameters['MP Meter X-Axis'] || 104);
 	Moghunter.bhud_mp_meter_pos_y = Number(Moghunter.parameters['MP Meter Y-Axis'] || 33);	
 	Moghunter.bhud_mp_meter_rotation = Number(Moghunter.parameters['MP Meter Angle'] || 0);
-	Moghunter.bhud_mp_meter_flow = String(Moghunter.parameters['MP Meter Flow Anime'] || false);
+	Moghunter.bhud_mp_meter_flow = String(Moghunter.parameters['MP Meter Flow Anime'] || true);
 	
 	// MP NUMBER POSITION
 	Moghunter.bhud_mp_number_visible  = String(Moghunter.parameters['MP Number Visible'] || true);
@@ -1329,7 +1329,7 @@
 	Moghunter.bhud_tp_meter_pos_x = Number(Moghunter.parameters['TP Meter X-Axis'] || 104);
 	Moghunter.bhud_tp_meter_pos_y = Number(Moghunter.parameters['TP Meter Y-Axis'] || 59);	
 	Moghunter.bhud_tp_meter_rotation = Number(Moghunter.parameters['TP Meter Angle'] || 0);
-	Moghunter.bhud_tp_meter_flow = String(Moghunter.parameters['TP Meter Flow Anime'] || false);
+	Moghunter.bhud_tp_meter_flow = String(Moghunter.parameters['TP Meter Flow Anime'] || true);
 	
 	// TP NUMBER POSITION
 	Moghunter.bhud_tp_number_visible  = String(Moghunter.parameters['TP Number Visible'] || true);
@@ -1827,6 +1827,131 @@ Window_BattleEnemy.prototype.maxCols = function() {
 //==============================
 // * initialize
 //==============================
+
+//=============================================================================
+// ** Window_ActorCommand - Command Bar
+//=============================================================================
+
+// How far (in pixels) the selected item slides to the right
+// Change this number to adjust the slide distance
+Window_ActorCommand.COMMAND_BAR_SLIDE = 12;
+
+// X offset for all bars (change this to move them left/right)
+Window_ActorCommand.COMMAND_BAR_OFFSET_X = 8;
+
+//==============================
+// * Symbol to image name
+//==============================
+Window_ActorCommand.prototype._symbolToBarName = function(symbol) {
+	if (symbol === 'attack') {return 'Attack_Bar'};
+	if (symbol === 'skill')  {return 'Skill_Bar'};
+	if (symbol === 'guard')  {return 'Guard_Bar'};
+	if (symbol === 'item')   {return 'Item_Bar'};
+	return 'Attack_Bar';
+};
+
+//==============================
+// * Draw Item - suppress default text
+//==============================
+Window_ActorCommand.prototype.drawItem = function(index) {
+	// Do nothing - bars are drawn as sprites in _commandBarContainer
+};
+
+//==============================
+// * Create bar sprite container
+//==============================
+Window_ActorCommand.prototype.createCommandBarSprites = function() {
+	if (this._commandBarContainer) {
+		if (this._commandBarContainer.parent) {
+			this._commandBarContainer.parent.removeChild(this._commandBarContainer);
+		}
+	}
+	this._commandBarContainer = new Sprite();
+	this._commandBarSprites = [];
+	var names = ['Attack_Bar','Skill_Bar','Guard_Bar','Item_Bar'];
+	for (var i = 0; i < names.length; i++) {
+		var sp = new Sprite(ImageManager.loadBHud(names[i]));
+		sp._cmdIndex = i;
+		this._commandBarContainer.addChild(sp);
+		this._commandBarSprites.push(sp);
+	}
+	return this._commandBarContainer;
+};
+
+//==============================
+// * Update bars position/opacity each frame
+//==============================
+// X offset for unselected bars (nudged right)
+Window_ActorCommand.COMMAND_BAR_UNSELECTED_X = 10;
+// How far selected bar pops left (negative = left)
+Window_ActorCommand.COMMAND_BAR_SELECTED_X = -8;
+// Scale of selected bar
+Window_ActorCommand.COMMAND_BAR_SELECTED_SCALE = 1.08;
+// Extra spacing between bars in pixels
+Window_ActorCommand.COMMAND_BAR_SPACING = 6;
+
+Window_ActorCommand.prototype.updateCommandBars = function() {
+	if (!this._commandBarSprites) {return};
+	if (!this._list || this._list.length === 0) {return};
+	var offsetX = Window_ActorCommand.COMMAND_BAR_OFFSET_X;
+	var unselX = Window_ActorCommand.COMMAND_BAR_UNSELECTED_X;
+	var selX = Window_ActorCommand.COMMAND_BAR_SELECTED_X;
+	var selScale = Window_ActorCommand.COMMAND_BAR_SELECTED_SCALE;
+	var spacing = Window_ActorCommand.COMMAND_BAR_SPACING;
+	var itemH = this.itemHeight() + spacing;
+	for (var i = 0; i < this._commandBarSprites.length; i++) {
+		var sp = this._commandBarSprites[i];
+		var enabled = this.isCommandEnabled(i);
+		var selected = (this.active && this.index() === i && enabled);
+		var targetX = this.x + offsetX + (selected ? selX : unselX);
+		var targetY = this.y + (i * itemH);
+		var targetScale = selected ? selScale : 1.0;
+		sp.x += (targetX - sp.x) * 0.3;
+		sp.y += (targetY - sp.y) * 0.3;
+		sp.scale.x += (targetScale - sp.scale.x) * 0.3;
+		sp.scale.y += (targetScale - sp.scale.y) * 0.3;
+		sp.opacity = !enabled ? 60 : (selected ? 255 : 160);
+		sp.visible = this.visible && this.contentsOpacity > 0;
+	}
+	if (this._commandBarContainer) {
+		this._commandBarContainer.opacity = this.contentsOpacity;
+	}
+};
+
+//==============================
+// * Update
+//==============================
+var _mog_bhud_wActCom_update2 = Window_ActorCommand.prototype.update;
+Window_ActorCommand.prototype.update = function() {
+	_mog_bhud_wActCom_update2.call(this);
+	this.updateCommandBars();
+};
+
+Window_ActorCommand.prototype.setCursorRect = function(x, y, width, height) {
+	Window.prototype.setCursorRect.call(this, 0, 0, 0, 0);
+};
+
+// Skip over disabled commands when moving cursor
+var _mog_bhud_wActCom_cursorDown = Window_ActorCommand.prototype.cursorDown;
+Window_ActorCommand.prototype.cursorDown = function(wrap) {
+	var max = this.maxItems();
+	var index = this.index();
+	for (var i = 1; i <= max; i++) {
+		var next = (index + i) % max;
+		if (this.isCommandEnabled(next)) {this.select(next); return;}
+	}
+};
+
+var _mog_bhud_wActCom_cursorUp = Window_ActorCommand.prototype.cursorUp;
+Window_ActorCommand.prototype.cursorUp = function(wrap) {
+	var max = this.maxItems();
+	var index = this.index();
+	for (var i = 1; i <= max; i++) {
+		var prev = (index - i + max) % max;
+		if (this.isCommandEnabled(prev)) {this.select(prev); return;}
+	}
+};
+
 var _alias_mog_bhud_wActCom_initialize = Window_ActorCommand.prototype.initialize;
 Window_ActorCommand.prototype.initialize = function() {
     _alias_mog_bhud_wActCom_initialize.call(this);
@@ -2081,9 +2206,6 @@ Spriteset_Battle.prototype.updateActors = function() {
 	_mog_bhud_sprbat_updateActors.call(this);
 };
 
-//==============================
-// * Create Dust (Spriteset_Battle)
-//==============================
 var _mog_bhud_sprbat_createActors = Spriteset_Battle.prototype.createActors;
 Spriteset_Battle.prototype.createActors = function() {
 	_mog_bhud_sprbat_createActors.call(this);
@@ -2299,7 +2421,6 @@ Scene_Map.prototype.update = function() {
 //==============================
 // ** create Spriteset
 //==============================
-
 var _mog_bhud_sbattle_createSpriteset = Scene_Battle.prototype.createSpriteset;
 Scene_Battle.prototype.createSpriteset = function() {
 	 _mog_bhud_sbattle_createSpriteset.call(this);
@@ -2356,6 +2477,8 @@ Scene_Battle.prototype.createAllWindows = function() {
 	this._actorCommandWindow.width = Moghunter.bhud_com_width;
 	this._actorCommandWindow.height = Moghunter.bhud_com_height;		
 	if (String(Moghunter.bhud_com_layout) === "true") {this._actorCommandWindow.opacity = 0};
+	var barContainer = this._actorCommandWindow.createCommandBarSprites();
+	this.addChild(barContainer);
 	// PARTY COMMAND ---------------------------------------------------------------------	
 	this._partyCommandWindow.x = Moghunter.bhud_party_x;
 	this._partyCommandWindow.y = Moghunter.bhud_party_y;
@@ -2949,9 +3072,7 @@ Battle_Hud.prototype.update_meter_bg = function(bg) {
 	var iw = bg._meterImg.width / 3;
 	var ih = bg._meterImg.height / 2;
 	var bmp = new Bitmap(iw + 2, ih + 2);
-	// Black fill
 	bmp.fillRect(1, 1, iw, ih, 'rgba(0,0,0,1)');
-	// 1px white border
 	var bc = bg._borderColor;
 	bmp.fillRect(0, 0, iw + 2, 1, bc);
 	bmp.fillRect(0, ih + 1, iw + 2, 1, bc);
