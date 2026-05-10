@@ -10,6 +10,10 @@
  * @desc Comma-separated indices of the bodyguard enemies.
  * @default 0,1
  *
+ * @param Troop ID
+ * @desc The ID of the troop this system activates for. 0 = all troops.
+ * @default 0
+ *
  * @param Intercept Message
  * @desc Message shown the first time a bodyguard intercepts. Use %1 for guard name.
  * @default %1 steps in front to protect their master!
@@ -19,12 +23,16 @@
     var params = PluginManager.parameters('BodyguardSystem');
     var BOSS_INDEX    = Number(params['Boss Index'] || 2);
     var GUARD_INDICES = String(params['Guard Indices'] || '0,1').split(',').map(Number);
-    var MESSAGE       = String(params['Intercept Message'] || 'Hehe.. Thank you Piggy.');
+    var TROOP_ID      = Number(params['Troop ID'] || 5);
+    var MESSAGE       = String(params['Intercept Message'] || 'Hehe... Thank you piggy.');
 
     var _hasShownMessage = false;
     var _queuedMessage = null;
 
-    // Reset flag at the start of each battle
+    function isCorrectTroop() {
+        return TROOP_ID === 0 || $gameTroop.troop().id === TROOP_ID;
+    }
+
     var _BattleManager_startBattle = BattleManager.startBattle;
     BattleManager.startBattle = function() {
         _hasShownMessage = false;
@@ -32,7 +40,6 @@
         _BattleManager_startBattle.call(this);
     };
 
-    // After all actions in a turn are done, show the queued message if any
     var _BattleManager_endTurn = BattleManager.endTurn;
     BattleManager.endTurn = function() {
         _BattleManager_endTurn.call(this);
@@ -46,7 +53,7 @@
     Game_Action.prototype.makeTargets = function() {
         var targets = _Game_Action_makeTargets.call(this);
 
-        if (this.isForOpponent() && this.subject().isActor()) {
+        if (this.isForOpponent() && this.subject().isActor() && isCorrectTroop()) {
             targets = targets.map(function(target) {
                 return interceptIfBoss(target);
             });

@@ -1,0 +1,8 @@
+[
+null,
+{"id":1,"battlerName":"Valeria","characterIndex":0,"characterName":"Characters","classId":1,"equips":[1,1,2,5,0],"faceIndex":0,"faceName":"Actor1","traits":[{"code":23,"dataId":5,"value":0}],"initialLevel":1,"maxLevel":99,"name":"Valeria","nickname":"","note":"<BattlePosition>\nActorX = [600]\nActorY = [400]","profile":""},
+{"id":2,"battlerName":"Valeria","characterIndex":1,"characterName":"Characters","classId":2,"equips":[6,0,6,7,0],"faceIndex":3,"faceName":"Nature","traits":[{"code":23,"dataId":5,"value":0}],"initialLevel":1,"maxLevel":99,"name":"Milo","nickname":"","note":"<BattlePosition>\nActorX = [200]\nActorY = [400]","profile":""},
+{"id":3,"battlerName":"Valeria","characterIndex":3,"characterName":"Characters","classId":1,"equips":[0,0,0,0,0],"faceIndex":0,"faceName":"","traits":[],"initialLevel":1,"maxLevel":99,"name":"Baby Val","nickname":"","note":"<BattlePosition>\nActorX = [500]\nActorY = [400]","profile":""},
+{"id":4,"battlerName":"Valeria","characterIndex":7,"characterName":"Nature","classId":1,"equips":[0,0,0,0,0],"faceIndex":7,"faceName":"Actor3","traits":[],"initialLevel":1,"maxLevel":99,"name":"Volucris","nickname":"","note":"<BattlePosition>\nActorX = [100]\nActorY = [400]","profile":""},
+{"id":5,"battlerName":"","characterIndex":0,"characterName":"","classId":1,"equips":[0,0,0,0,0],"faceIndex":0,"faceName":"","traits":[],"initialLevel":1,"maxLevel":99,"name":"Gaius","nickname":"","note":"","profile":""}
+]

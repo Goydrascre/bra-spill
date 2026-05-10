@@ -1832,12 +1832,16 @@ Window_BattleEnemy.prototype.maxCols = function() {
 // ** Window_ActorCommand - Command Bar
 //=============================================================================
 
-// How far (in pixels) the selected item slides to the right
-// Change this number to adjust the slide distance
-Window_ActorCommand.COMMAND_BAR_SLIDE = 12;
-
-// X offset for all bars (change this to move them left/right)
+// How far the selected bar pops LEFT (increase to pop more)
+Window_ActorCommand.COMMAND_BAR_SELECTED_X = -8;
+// How far right unselected bars sit
+Window_ActorCommand.COMMAND_BAR_UNSELECTED_X = 10;
+// Base X offset for all bars
 Window_ActorCommand.COMMAND_BAR_OFFSET_X = 8;
+// Scale of selected bar (1.0 = normal)
+Window_ActorCommand.COMMAND_BAR_SELECTED_SCALE = 1.08;
+// Extra spacing between bars in pixels
+Window_ActorCommand.COMMAND_BAR_SPACING = 6;
 
 //==============================
 // * Symbol to image name
@@ -1854,17 +1858,15 @@ Window_ActorCommand.prototype._symbolToBarName = function(symbol) {
 // * Draw Item - suppress default text
 //==============================
 Window_ActorCommand.prototype.drawItem = function(index) {
-	// Do nothing - bars are drawn as sprites in _commandBarContainer
+	// Bars are sprites — suppress default text
 };
 
 //==============================
 // * Create bar sprite container
 //==============================
 Window_ActorCommand.prototype.createCommandBarSprites = function() {
-	if (this._commandBarContainer) {
-		if (this._commandBarContainer.parent) {
-			this._commandBarContainer.parent.removeChild(this._commandBarContainer);
-		}
+	if (this._commandBarContainer && this._commandBarContainer.parent) {
+		this._commandBarContainer.parent.removeChild(this._commandBarContainer);
 	}
 	this._commandBarContainer = new Sprite();
 	this._commandBarSprites = [];
@@ -1872,6 +1874,8 @@ Window_ActorCommand.prototype.createCommandBarSprites = function() {
 	for (var i = 0; i < names.length; i++) {
 		var sp = new Sprite(ImageManager.loadBHud(names[i]));
 		sp._cmdIndex = i;
+		// Start off-screen to the right so they slide in
+		sp.x = Graphics.width + 100;
 		this._commandBarContainer.addChild(sp);
 		this._commandBarSprites.push(sp);
 	}
@@ -1879,17 +1883,51 @@ Window_ActorCommand.prototype.createCommandBarSprites = function() {
 };
 
 //==============================
-// * Update bars position/opacity each frame
+// * Remember last selected symbol globally
 //==============================
-// X offset for unselected bars (nudged right)
-Window_ActorCommand.COMMAND_BAR_UNSELECTED_X = 10;
-// How far selected bar pops left (negative = left)
-Window_ActorCommand.COMMAND_BAR_SELECTED_X = -8;
-// Scale of selected bar
-Window_ActorCommand.COMMAND_BAR_SELECTED_SCALE = 1.08;
-// Extra spacing between bars in pixels
-Window_ActorCommand.COMMAND_BAR_SPACING = 6;
+Window_ActorCommand._lastSymbol = null;
 
+//==============================
+// * Called when player confirms a command — save the symbol
+//==============================
+var _mog_bhud_wActCom_processOk = Window_ActorCommand.prototype.processOk;
+Window_ActorCommand.prototype.processOk = function() {
+	Window_ActorCommand._lastSymbol = this.currentSymbol();
+	_mog_bhud_wActCom_processOk.call(this);
+};
+
+//==============================
+// * Select best command on open
+//==============================
+Window_ActorCommand.prototype.selectFirstEnabled = function() {
+	if (!this._list || this._list.length === 0) {return};
+	var last = Window_ActorCommand._lastSymbol;
+	// Fallback chain: if last symbol unavailable, try these in order
+	var fallbacks = {
+		'attack': ['skill', 'guard', 'item'],
+		'skill':  ['attack', 'guard', 'item'],
+		'guard':  ['attack', 'skill', 'item'],
+		'item':   ['attack', 'skill', 'guard'],
+	};
+	var tryOrder = last ? [last].concat(fallbacks[last] || ['guard','skill','item']) : ['attack','skill','guard','item'];
+	for (var t = 0; t < tryOrder.length; t++) {
+		var sym = tryOrder[t];
+		for (var i = 0; i < this._list.length; i++) {
+			if (this.commandSymbol(i) === sym && this.isCommandEnabled(i)) {
+				this.select(i);
+				return;
+			}
+		}
+	}
+	// Last resort: first enabled
+	for (var i = 0; i < this._list.length; i++) {
+		if (this.isCommandEnabled(i)) {this.select(i); return;}
+	}
+};
+
+//==============================
+// * Update bars position/opacity/scale each frame
+//==============================
 Window_ActorCommand.prototype.updateCommandBars = function() {
 	if (!this._commandBarSprites) {return};
 	if (!this._list || this._list.length === 0) {return};
@@ -1927,13 +1965,18 @@ Window_ActorCommand.prototype.update = function() {
 	this.updateCommandBars();
 };
 
+//==============================
+// * Hide cursor flash
+//==============================
 Window_ActorCommand.prototype.setCursorRect = function(x, y, width, height) {
 	Window.prototype.setCursorRect.call(this, 0, 0, 0, 0);
 };
 
-// Skip over disabled commands when moving cursor
-var _mog_bhud_wActCom_cursorDown = Window_ActorCommand.prototype.cursorDown;
+//==============================
+// * Skip disabled commands on cursor move
+//==============================
 Window_ActorCommand.prototype.cursorDown = function(wrap) {
+	if (!this._list) {return};
 	var max = this.maxItems();
 	var index = this.index();
 	for (var i = 1; i <= max; i++) {
@@ -1942,8 +1985,8 @@ Window_ActorCommand.prototype.cursorDown = function(wrap) {
 	}
 };
 
-var _mog_bhud_wActCom_cursorUp = Window_ActorCommand.prototype.cursorUp;
 Window_ActorCommand.prototype.cursorUp = function(wrap) {
+	if (!this._list) {return};
 	var max = this.maxItems();
 	var index = this.index();
 	for (var i = 1; i <= max; i++) {
@@ -1975,6 +2018,7 @@ var _alias_mog_bhud_wActCom_activate = Window_ActorCommand.prototype.activate;
 Window_ActorCommand.prototype.activate = function() {
     _alias_mog_bhud_wActCom_activate.call(this);
     if (String(Moghunter.bhud_com_layout) === "true") {this._force_hide_duration = 1};
+    this.selectFirstEnabled();
 };
 
 //==============================
@@ -2204,11 +2248,6 @@ var _mog_bhud_sprbat_updateActors = Spriteset_Battle.prototype.updateActors;
 Spriteset_Battle.prototype.updateActors = function() {
 	if (!$gameSystem.isSideView()) {return};
 	_mog_bhud_sprbat_updateActors.call(this);
-};
-
-var _mog_bhud_sprbat_createActors = Spriteset_Battle.prototype.createActors;
-Spriteset_Battle.prototype.createActors = function() {
-	_mog_bhud_sprbat_createActors.call(this);
 };
 
 var _mog_bhud_sprbat_createEnemies = Spriteset_Battle.prototype.createEnemies;
