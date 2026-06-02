@@ -1358,15 +1358,15 @@
 	
     // COMMAND WINDOWS
 	Moghunter.bhud_auto_pos = Number(Moghunter.parameters['Command Auto Adjust'] || 1);
-    Moghunter.bhud_com_x = Number(Moghunter.parameters['W Command X-Axis'] || 652);
-    Moghunter.bhud_com_y = Number(Moghunter.parameters['W Command Y-Axis'] || 444);
+	Moghunter.bhud_com_x = Number(Moghunter.parameters['W Command X-Axis'] || 1100);
+    Moghunter.bhud_com_y = Number(Moghunter.parameters['W Command Y-Axis'] || 520);
 	Moghunter.bhud_com_layout = String(Moghunter.parameters['Layout Command'] || true);
     Moghunter.bhud_com_lay_x = Number(Moghunter.parameters['L Command X-Axis'] || -25);
     Moghunter.bhud_com_lay_y = Number(Moghunter.parameters['L Command Y-Axis'] || -35);
 	Moghunter.bhud_com_width =  Number(Moghunter.parameters['W Command Width'] || 160);
     Moghunter.bhud_com_height =  Number(Moghunter.parameters['W Command Height'] || 180);		
-    Moghunter.bhud_com_slideX = Number(Moghunter.parameters['W Command Slide X'] || 0);
-    Moghunter.bhud_com_slideY = Number(Moghunter.parameters['W Command Slide Y'] || 64);
+    Moghunter.bhud_com_slideX = Number(Moghunter.parameters['W Command Slide X'] || 100);
+    Moghunter.bhud_com_slideY = Number(Moghunter.parameters['W Command Slide Y'] || 0);
 	
 		
 	// PARTY WINDOWS
@@ -1941,8 +1941,8 @@ Window_ActorCommand.prototype.updateCommandBars = function() {
 		var sp = this._commandBarSprites[i];
 		var enabled = this.isCommandEnabled(i);
 		var selected = (this.active && this.index() === i && enabled);
-		var targetX = this.x + offsetX + (selected ? selX : unselX);
-		var targetY = this.y + (i * itemH);
+		var targetX = 1100 + offsetX + (selected ? selX : unselX);
+		var targetY = 520 + (i * itemH);
 		var targetScale = selected ? selScale : 1.0;
 		sp.x += (targetX - sp.x) * 0.3;
 		sp.y += (targetY - sp.y) * 0.3;
@@ -2269,8 +2269,8 @@ Spriteset_Battle.prototype.createDustLayer = function() {
 	this._dustSpeed = speed;
 	this._dustSprite1 = new Sprite(ImageManager.loadBHud(image));
 	this._dustSprite2 = new Sprite(ImageManager.loadBHud(image));
-	this._dustSprite1.y = 200;
-	this._dustSprite2.y = 200;
+    this._dustSprite1.y = Graphics.height / 2;
+    this._dustSprite2.y = Graphics.height / 2;
 	this._dustReady = false;
 	this.addChild(this._dustSprite1);
 	this.addChild(this._dustSprite2);
@@ -2710,6 +2710,14 @@ Scene_Battle.prototype.updateWindowSlideEffect = function() {
 // ** updateLayoutWindows
 //==============================
 Scene_Battle.prototype.updateLayoutWindow = function() {
+    if (this._skillWindow.isOpenAndActive() || this._itemWindow.isOpenAndActive()) {
+        this._helpWindow.visible = true;
+        this._helpWindow.contentsOpacity = 255;
+    } else {
+        this._helpWindow.visible = false;
+        this._helpWindow.contentsOpacity = 0;
+        this._helpWindow.contents.clear();
+    };
 	if (this._com_layout) {
     	this._com_layout.x = Moghunter.bhud_com_lay_x + this._actorCommandWindow.x;
     	this._com_layout.y = Moghunter.bhud_com_lay_y + this._actorCommandWindow.y;
@@ -2727,8 +2735,8 @@ Scene_Battle.prototype.updateLayoutWindow = function() {
 	if (this._help_layout) {
     	this._help_layout.x = Moghunter.bhud_help_lay_x + this._helpWindow.x;
     	this._help_layout.y = Moghunter.bhud_help_lay_y + this._helpWindow.y;
-    	this._help_layout.visible = this._helpWindow.visible;
-		this._help_layout.opacity = this._helpWindow.contentsOpacity;		
+    	this._help_layout.visible = (this._skillWindow.isOpenAndActive() || this._itemWindow.isOpenAndActive()) && this._helpWindow.visible;
+    	this._help_layout.opacity = this._helpWindow.contentsOpacity;		
     };	
 	if (this._skill_layout) {
     	this._skill_layout.x = Moghunter.bhud_skill_lay_x + this._skillWindow.x;
@@ -2759,7 +2767,6 @@ Scene_Battle.prototype.updateLayoutWindow = function() {
 		if (!this._enemyWindow.visible) {this._enemy_layout.visible = false};
     };		
 };
-
 //==============================
 // * Sprite Move To
 //==============================
