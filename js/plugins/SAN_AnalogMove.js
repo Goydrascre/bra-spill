@@ -7,7 +7,7 @@
 //=============================================================================
 
 /*:
- * @plugindesc アナログムーブ 3.1.5
+ * @plugindesc アナログムーブ 3.1.5 (+DiagonalSprites)
  * パーティキャラクターの移動をドット移動に変更します。
  * @author サンシロ https://twitter.com/rev2nym
  * 
@@ -15,7 +15,15 @@
  * ■概要
  * パーティキャラクターの移動をタイルによらないドット移動に変更します。
  * 方向キー操作、タッチ操作に対応します。
- * 
+ *
+ * ■対角線スプライト
+ * ファイル名を "$D" で始めることで対角線スプライトシートが有効になります。
+ * 例: $DActor1.png
+ * シートは通常の2倍の高さが必要です（8方向行 × フレーム高さ）。
+ * 行の順序（上から下）:
+ *   0: 下, 1: 左, 2: 右, 3: 上,
+ *   4: 左下, 5: 右下, 6: 左上, 7: 右上
+ *
  * ■アナログスティック入力
  * アナログスティックによる任意方向への移動や速度調節に対応するためには
  * プラグイン「アナログスティック(SAN_AnalogStick.js)」を導入してください。
@@ -985,7 +993,13 @@ Game_CharacterBase.prototype.dirVec = function() {
 };
 
 // 方向ベクトルの設定
+// Also stores the raw dir8 value for diagonal sprite selection.
 Game_CharacterBase.prototype.setDirVec = function(dirVec) {
+    if (dirVec.len() > 0) {
+        // Store the full 8-direction value before snapping to 4-dir
+        this._diagonalDir8 = CharacterMover.radToDir8(dirVec.dir());
+    }
+    // Cardinal direction (4-way) used for collision, events, etc.
     this.setDirection(CharacterMover.radToDir4(dirVec.dir()));
 };
 
@@ -1789,6 +1803,114 @@ Scene_Map.prototype.updateCallMenu = function() {
 // シーンアクティブ判定
 SceneManager.isSceneActive = function() {
     return !!this._scene.isActive && this._scene.isActive();
+};
+
+//-----------------------------------------------------------------------------
+// DiagonalSprite
+//
+// 対角線スプライトサポート
+//
+// 使い方:
+//   キャラクター画像のファイル名を "$D" で始めてください。
+//   例: $DActor1.png
+//
+//   シートレイアウト (上から下の行順):
+//     行 0: 下
+//     行 1: 左
+//     行 2: 右
+//     行 3: 上
+//     行 4: 左下 (斜め)
+//     行 5: 右下 (斜め)
+//     行 6: 左上 (斜め)
+//     行 7: 右上 (斜め)
+//
+//   シートサイズ:
+//     元のシート幅はそのまま維持してください。
+//     高さは元の2倍にしてください (8方向 × フレーム高さ)。
+//     例: 元が 864x864 なら新しいシートは 864x1728 になります。
+//-----------------------------------------------------------------------------
+
+// dir8 値から対角行インデックスへのマッピング
+// (1=左下, 3=右下, 7=左上, 9=右上)
+var DiagonalSprite = {};
+DiagonalSprite.diagonalRowMap = {
+    1: 4,  // 左下
+    3: 5,  // 右下
+    7: 6,  // 左上
+    9: 7   // 右上
+};
+
+// ファイル名が $D で始まるかチェック
+DiagonalSprite.isDiagonalSheet = function(characterName) {
+    return typeof characterName === 'string' &&
+           characterName.charAt(0) === '$' &&
+           characterName.charAt(1) === 'D';
+};
+
+// dir8 値が対角方向かチェック
+DiagonalSprite.isDiagonal = function(dir8) {
+    return dir8 % 2 !== 0;
+};
+
+// dir4 から標準行インデックスへのマッピング
+DiagonalSprite.cardinalRowMap = {
+    2: 0,  // 下
+    4: 1,  // 左
+    6: 2,  // 右
+    8: 3   // 上
+};
+
+// Sprite_Character のフレーム更新をオーバーライドして
+// $D シートの対角フレームを処理する
+//
+// $D シートは $ プレフィックス付きの単一キャラクターシートです。
+// 構造: 幅 = 3フレーム分, 高さ = 8方向分
+// 各フレームサイズ: bitmap.width / 3 × bitmap.height / 8
+var _Sprite_Character_updateCharacterFrame =
+    Sprite_Character.prototype.updateCharacterFrame;
+Sprite_Character.prototype.updateCharacterFrame = function() {
+    if (!DiagonalSprite.isDiagonalSheet(this._characterName)) {
+        // 通常シートはそのまま処理
+        _Sprite_Character_updateCharacterFrame.call(this);
+        return;
+    }
+
+    if (!this.bitmap) {
+        return;
+    }
+
+    // 単一キャラクターシートなのでフレーム幅 = 総幅 / 3ウォークフレーム
+    // フレーム高さ = 総高さ / 8方向
+    var pw = Math.floor(this.bitmap.width / 3);
+    var ph = Math.floor(this.bitmap.height / 8);
+
+    // 現在のウォークアニメーションフレーム (0, 1, 2)
+    var pattern = this._character.pattern();
+    // RPG Maker のパターン順は 0,1,2,1 なので中央フレームを1にマップ
+    var frameIndex = (pattern === 0 ? 0 : pattern === 2 ? 2 : 1);
+
+    var sx = frameIndex * pw;
+
+    // 現在の dir8 から行を決定する
+    var character = this._character;
+    var dir8 = character._diagonalDir8;
+    var row;
+
+    if (dir8 && DiagonalSprite.isDiagonal(dir8) &&
+        DiagonalSprite.diagonalRowMap[dir8] !== undefined) {
+        // 斜め移動: 対角行 (4〜7) を使用
+        row = DiagonalSprite.diagonalRowMap[dir8];
+    } else {
+        // 通常移動: dir4 から行 (0〜3) を決定
+        var dir4 = character.direction();
+        row = DiagonalSprite.cardinalRowMap[dir4] !== undefined
+            ? DiagonalSprite.cardinalRowMap[dir4]
+            : 0;
+    }
+
+    var sy = row * ph;
+
+    this.setFrame(sx, sy, pw, ph);
 };
 
 //-----------------------------------------------------------------------------

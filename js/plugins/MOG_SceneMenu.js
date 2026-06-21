@@ -525,7 +525,7 @@ Scene_Menu.prototype.createCommands = function() {
 	 this._field.addChild(this._comField);
 	 var totalItems = this._comList.length;
 	 var spacing = 56;
-	 var startY = Graphics.boxHeight - (spacing * totalItems) + 5;
+	 var startY = 575 - (spacing * (totalItems - 1));
 	 for (var i = 0; i < totalItems; i++) {
 		 this._commands[i] = new Sprite(this._comBitmaps[i]);
 		 this._commands[i].anchor.x = 0.5;
