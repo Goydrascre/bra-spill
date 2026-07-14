@@ -4426,9 +4426,7 @@ Game_Enemy.prototype.skills = function() {
 
 Game_Enemy.prototype.performActionStart = function(action) {
     Game_Battler.prototype.performActionStart.call(this, action);
-    if (!$gameSystem.isSideView() || !this.spriteCanMove()) {
-      this.requestEffect('whiten');
-    }
+    this.requestEffect('whiten');
 };
 
 Yanfly.BEC.Game_Enemy_performDamage = Game_Enemy.prototype.performDamage;
@@ -5648,6 +5646,79 @@ Yanfly.Util.getRange = function(n, m) {
 
 Yanfly.Util.onlyUnique = function(value, index, self) {
     return self.indexOf(value) === index;
+};
+
+//=============================================================================
+// End of File
+//=============================================================================
+//=============================================================================
+// Flinch: enemies knock backward (up, away from the party) on hit/miss/evade
+Sprite_Battler.prototype.stepFlinch = function() {
+    var flinchX = this.x - this._homeX;
+    var flinchY = this.y - this._homeY - Yanfly.Param.BECFlinchDist;
+    this.startMove(flinchX, flinchY, 6);
+};
+
+// Step forward: enemies advance downward (toward the party) to act
+Sprite_Battler.prototype.stepForward = function() {
+    this.startMove(0, Yanfly.Param.BECStepDist, 12);
+};
+
+// Substitute step-back: enemy steps away (up) to make room for the substitute
+Sprite_Battler.prototype.stepSubBack = function() {
+    var backY = -1 * this.height / 2;
+    this.startMove(0, backY, 6);
+};
+
+// Step to substitute position: offsets along Y instead of X so the
+// substituting battler doesn't fully overlap the one it's protecting
+Sprite_Battler.prototype.stepToSubstitute = function(focus) {
+    var target = focus.battler();
+    var targetX = (this.x - this._homeX) + (target._homeX - this._homeX);
+    var targetY = (this.y - this._homeY) + (target._homeY - this._homeY);
+    if (focus.isActor()) targetY -= this._mainSprite.height / 2;
+    if (focus.isEnemy()) targetY += this.height / 2;
+    this.startMove(targetX, targetY, 1);
+};
+
+// Move Forward action sequence: distance now applies to Y instead of X
+Sprite_Battler.prototype.moveForward = function(distance, frames) {
+    distance = parseInt(distance);
+    frames = parseInt(frames);
+    if (this._battler.isActor()) distance *= -1;
+    var moveX = this.x - this._homeX;
+    var moveY = this.y - this._homeY + distance;
+    this.startMove(moveX, moveY, frames);
+};
+
+//=============================================================================
+// Sprite_Actor (override - used by actors)
+//=============================================================================
+
+// Flinch: actors knock backward (down, away from the enemies) on hit/miss/evade
+Sprite_Actor.prototype.stepFlinch = function() {
+    var flinchX = this.x - this._homeX;
+    var flinchY = this.y - this._homeY + Yanfly.Param.BECFlinchDist;
+    this.startMove(flinchX, flinchY, 6);
+};
+
+// Step forward: actors advance upward (toward the enemies) to act
+Sprite_Actor.prototype.stepForward = function() {
+    this.startMove(0, -Yanfly.Param.BECStepDist, 12);
+};
+
+// Substitute step-back: actor steps away (down) to make room for the substitute
+Sprite_Actor.prototype.stepSubBack = function() {
+    var backY = this._mainSprite.height / 2;
+    this.startMove(0, backY, 6);
+};
+
+// Battle-start slide-in: actors now slide in vertically instead of horizontally
+Sprite_Actor.prototype.moveToStartPosition = function() {
+    if (BattleManager._bypassMoveToStartLocation) return;
+    if ($gameSystem.isSideView() && this._checkAliveStatus) {
+      this.startMove(0, 300, 0);
+    }
 };
 
 //=============================================================================

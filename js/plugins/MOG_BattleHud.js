@@ -2167,6 +2167,12 @@ Sprite_Actor.prototype.damageOffsetX = function() {
 	if (!$gameSystem.isSideView() && this._sprite_face) {return 0};
     return -32;
 };
+//==============================
+// * Damage Offset Y
+//==============================
+Sprite_Actor.prototype.damageOffsetY = function() {
+    return -120; // negative moves the numbers up, positive moves them down
+};
 
 //==============================
 // * update Position
