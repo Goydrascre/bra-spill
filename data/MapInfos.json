@@ -6,10 +6,11 @@ null,
 {"id":4,"expanded":false,"name":"MAP004","order":2,"parentId":0,"scrollX":2777.142857142857,"scrollY":1536},
 {"id":5,"expanded":true,"name":"CityEntrance","order":9,"parentId":0,"scrollX":1620,"scrollY":896},
 {"id":6,"expanded":true,"name":"Intro scene Valeria#4","order":7,"parentId":0,"scrollX":2430,"scrollY":1344},
-{"id":7,"expanded":false,"name":"Intro scene Valeria#3","order":6,"parentId":0,"scrollX":1767.2727272727273,"scrollY":977.4545454545455},
+{"id":7,"expanded":false,"name":"Intro scene Valeria#3","order":6,"parentId":0,"scrollX":1404,"scrollY":783.4285714285713},
 {"id":8,"expanded":false,"name":"Intro scene Valeria#5","order":8,"parentId":0,"scrollX":1767.2727272727273,"scrollY":977.4545454545455},
 {"id":9,"expanded":false,"name":"Intro scene Valeria#1","order":5,"parentId":0,"scrollX":1767.2727272727273,"scrollY":977.4545454545455},
 {"id":10,"expanded":true,"name":"Woods_01","order":10,"parentId":5,"scrollX":2406,"scrollY":1536},
-{"id":11,"expanded":false,"name":"Milo","order":11,"parentId":5,"scrollX":2430,"scrollY":1344},
-{"id":12,"expanded":false,"name":"Woods_02","order":12,"parentId":5,"scrollX":1622,"scrollY":1614}
+{"id":11,"expanded":false,"name":"Milo","order":11,"parentId":5,"scrollX":2184,"scrollY":1218.6666666666667},
+{"id":12,"expanded":true,"name":"Woods_02","order":12,"parentId":5,"scrollX":1769.4545454545455,"scrollY":997.0909090909091},
+{"id":13,"expanded":false,"name":"Woods_03","order":13,"parentId":12,"scrollX":3599.1111111111113,"scrollY":1010.6666666666666}
 ]
